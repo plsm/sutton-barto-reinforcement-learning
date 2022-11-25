@@ -18,9 +18,10 @@
 
 
 module Util.RandomStreams (
-  streamRandomPositiveInts,
-  streamRandomFloats,
-  streamRandomFlips
+    streamRandomPositiveInts
+  , streamRandomUniformFloats
+  , streamRandomNormalFloats
+  , streamRandomFlips
   ) where
 
 import System.Random
@@ -40,11 +41,11 @@ streamRandomPositiveInts seed =
   in
     randomRs (from, to) rng
 
--- | Return a list of random floating point numbers from the interval [0,1[.
-streamRandomFloats ::
+-- | Return a list of uniformly distributed random floating point numbers from the interval [0,1[.
+streamRandomUniformFloats ::
      Int        -- ^ Seed of the pseudo random number generator.
   -> [Float]
-streamRandomFloats seed =
+streamRandomUniformFloats seed =
   let
     rng = mkStdGen seed
     from = 0 :: Int
@@ -53,6 +54,26 @@ streamRandomFloats seed =
     cvt = (\n -> convert ((%) (convert n) divisor))
   in
     map cvt (randomRs (from, to) rng)
+
+-- | Return a list of normaly distrubted random floating point numbers
+-- with average zero and variance one.
+streamRandomNormalFloats ::
+     Int        -- ^ Seed of the pseudo random number generator.
+  -> [Float]
+streamRandomNormalFloats seed =
+  let
+    transform :: [Float] -> [Float]
+    transform xs =
+      let
+        x1:x2:xs' = xs
+        r = sqrt $ -2 * log x1
+        a = 2 * pi * x2
+        y1 = r * cos a
+        y2 = r * sin a
+      in
+        y1:y2:(transform xs')
+  in
+    transform $ streamRandomUniformFloats seed
 
 -- | Return a list of random boolean values.  The probability of getting true can be set.
 --
